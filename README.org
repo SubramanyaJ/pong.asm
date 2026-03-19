@@ -1,0 +1,4 @@
+* References
+- [[https://www.cs.uaf.edu/2017/fall/cs301/lecture/10_02_float_asm.html][Floating point operations]]
+- [[https://faydoc.tripod.com/cpu/jbe.htm][Jump instructions]]
+- [[https://www.felixcloutier.com/x86/cvtss2sd][Promoting float to double]]
