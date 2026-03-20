@@ -14,10 +14,12 @@ extrn IsKeyPressed
 extrn IsKeyDown
 extrn DrawRectangleV
 extrn SetTargetFPS
-extrn DrawFPS
 extrn DrawRectangleLines
 extrn DrawCircleV
-
+extrn DrawText
+extrn DrawLineV
+extrn GetScreenWidth
+extrn GetScreenHeight
 .__print:
  	movss xmm0, [ball]
  	cvtss2sd xmm0, xmm0
@@ -28,12 +30,13 @@ extrn DrawCircleV
  	call printf
 
 _start:
-	mov rdi, [window_width]
-	mov rsi, [window_height]
+
+	mov rdi, [window_dims]
+	mov rsi, [window_dims + 4]
 	mov rdx, window_title
 	call InitWindow
 
-	mov rdi, 60
+	mov rdi, 165
 	call SetTargetFPS
 
 	.__draw_loop:
@@ -41,12 +44,14 @@ _start:
 	test rax, rax
 	jnz .__exit_drawing
 
-	;; exit condition
-	mov rdi, 81
+	;; exit condition : KEY_ESCAPE
+	mov rdi, 256
 	call IsKeyPressed
 	test rax, rax
-	jnz .__exit_drawing			
+	jz .__past_exit_check
+	jmp .__exit_drawing			
 
+.__past_exit_check:
 ; update ball position x
     movss xmm0, [ball]
 	addss xmm0, [ball_velocity]
@@ -64,7 +69,7 @@ _start:
 
 	movss xmm0, [ball + 4]
 	ucomiss xmm0, xmm1
-	jb .__exit_drawing
+ 	jb .__exit_drawing
 
 	ucomiss xmm0, xmm2
 	ja .__exit_drawing
@@ -186,21 +191,37 @@ _start:
 	movss [left_paddle + 4], xmm0
 
 .__begin_drawing:
+
+	call GetScreenWidth
+	mov [window_dims], rax
+	call GetScreenHeight
+	mov [window_dims + 4], rax
+
+
 	call BeginDrawing
-	mov edi, 0xFF000000
+	mov edi, 0x30012005
 	call ClearBackground
 
-	mov rdi, 10
-	mov rsi, 10
-	call DrawFPS
+	; Calculate middle_top and middle_bottom
+;	mov rax, [window_dims]
+;	xor rdx, rdx
+;	mov rcx, 2
+;	div rcx
+;	sub rax, 1
+;	mov [middle_top], rax
+
+	mov rdi, fmt
+	mov rsi, [window_dims]
+	mov rdx, [window_dims + 4]
+	call printf
+
+	movq xmm0, [middle_top]
+	movq xmm1, [middle_bottom]
+	mov rdi, 0xFFCCCCCC
+	call DrawRectangleV
 
 	;; Bounding Box
-	mov rdi, [bounding_box]
-	mov rsi, [bounding_box + 4]
-	mov rdx, [bounding_box + 8]
-	mov rcx, [bounding_box + 12]
-	mov r8, 0xFFFFFFFF
-	call DrawRectangleLines
+	call DrawRectangleV
 
 	movq xmm0, [left_paddle]
 	movq xmm1, [left_paddle + 8]
@@ -214,7 +235,7 @@ _start:
 
 	movq xmm0, [ball]
 	movss xmm1, [ball + 8]
-	mov rdi, 0xFF00FF00
+	mov rdi, 0xFF800080
 	call DrawCircleV
 
 	call EndDrawing
@@ -227,45 +248,52 @@ _start:
 
 section '.data' writeable
 window_title: db "pong", 0
-fmt: db "| %f, %f |", 10, 0
+fmt: db "| %d %d |", 10, 0
 
-window_width:	dd 800	
-window_height:	dd 600
-
+window_dims:
+	dd 800
+	dd 600
 bounding_box:
 	dd 5.0
 	dd 5.0
 	dd 795.0
 	dd 595.0
-five:
-	dd 5.0
-
 left_paddle:
 	dd 10.0
 	dd 10.0
 	dd 10.0
 	dd 100.0
-
 right_paddle:
 	dd 785.0
 	dd 10.0
 	dd 10.0
 	dd 100.0
-
 paddle_speed:
-	dd 12.0
+	dd 8.0
 paddle_top:
 	dd 10.0
 paddle_bottom:
 	dd 490.0
-
 ball:
 	dd 400.0
 	dd 300.0
 	dd 8.0
 ball_velocity:
-	dd 4.0
-	dd 4.0
+	dd 2.0
+	dd 2.0
 	dd 0.0
 minus_one:
 	dd -1.0
+score_r:
+	dd 0
+score_l:
+	dd 0
+middle_top:
+	dd 399.5
+	dd 000.0
+middle_bottom:
+	dd 1.0
+	dd 600.0
+screen_size:
+	dd 0.0
+	dd 0.0
