@@ -17,7 +17,7 @@ extrn SetTargetFPS
 extrn DrawRectangleLines
 extrn DrawCircleV
 extrn DrawText
-extrn DrawLineV
+extrn DrawLine
 extrn GetScreenWidth
 extrn GetScreenHeight
 .__print:
@@ -194,34 +194,47 @@ _start:
 
 	call GetScreenWidth
 	mov [window_dims], rax
+	sub rax, 10
+	cvtsi2ss xmm0, rax
+	movss [bounding_box + 8], xmm0
+	sub rax, 10
+	cvtsi2ss xmm0, rax
+	movss [right_paddle], xmm0
+
 	call GetScreenHeight
 	mov [window_dims + 4], rax
-
+	sub rax, 10
+	cvtsi2ss xmm0, rax
+	movss [bounding_box + 12], xmm0
+	sub rax, 100
+	cvtsi2ss xmm0, rax
+	movss [paddle_bottom], xmm0
 
 	call BeginDrawing
 	mov edi, 0x30012005
 	call ClearBackground
 
 	; Calculate middle_top and middle_bottom
-;	mov rax, [window_dims]
-;	xor rdx, rdx
-;	mov rcx, 2
-;	div rcx
-;	sub rax, 1
-;	mov [middle_top], rax
+	mov rax, [window_dims]
+	xor edx, edx
+	mov ecx, 2
+	div ecx
+	sub eax, 1
 
-	mov rdi, fmt
-	mov rsi, [window_dims]
-	mov rdx, [window_dims + 4]
-	call printf
+	mov dword [middle_top], eax
+	mov dword [middle_bottom], eax
+	mov dword [middle_top + 4], 5
+	mov dword eax, [window_dims + 4]
+	sub eax, 5
+	mov dword [middle_bottom + 4], eax
 
-	movq xmm0, [middle_top]
-	movq xmm1, [middle_bottom]
-	mov rdi, 0xFFCCCCCC
-	call DrawRectangleV
-
-	;; Bounding Box
-	call DrawRectangleV
+	; Draw middle line
+	mov dword edi, [middle_top]
+	mov dword esi, [middle_top + 4]
+	mov dword edx, [middle_bottom]
+	mov dword ecx, [middle_bottom + 4]
+	mov r8, 0xFFFFFFFF
+	call DrawLine
 
 	movq xmm0, [left_paddle]
 	movq xmm1, [left_paddle + 8]
@@ -248,12 +261,12 @@ _start:
 
 section '.data' writeable
 window_title: db "pong", 0
-fmt: db "| %d %d |", 10, 0
+fmt: db "| %d |", 10, 0
 
-window_dims:
+window_dims: ; dynamic
 	dd 800
 	dd 600
-bounding_box:
+bounding_box: ; dynamic
 	dd 5.0
 	dd 5.0
 	dd 795.0
@@ -264,7 +277,7 @@ left_paddle:
 	dd 10.0
 	dd 100.0
 right_paddle:
-	dd 785.0
+	dd 780.0
 	dd 10.0
 	dd 10.0
 	dd 100.0
@@ -277,7 +290,7 @@ paddle_bottom:
 ball:
 	dd 400.0
 	dd 300.0
-	dd 8.0
+	dd 10.0
 ball_velocity:
 	dd 2.0
 	dd 2.0
@@ -289,11 +302,11 @@ score_r:
 score_l:
 	dd 0
 middle_top:
-	dd 399.5
-	dd 000.0
+	dd 399
+	dd 000
 middle_bottom:
-	dd 1.0
-	dd 600.0
+	dd 1
+	dd 600
 screen_size:
 	dd 0.0
 	dd 0.0
