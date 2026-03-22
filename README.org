@@ -1,4 +1,4 @@
-#+TITLE: pong.ams
+#+TITLE: pong.asm
 
 The classic pong game written with fasm.
 

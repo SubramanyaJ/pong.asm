@@ -1,7 +1,5 @@
 format ELF64
 
-section '.text' executable
-public _start
 extrn _exit
 extrn printf
 extrn InitWindow
@@ -14,20 +12,13 @@ extrn IsKeyPressed
 extrn IsKeyDown
 extrn DrawRectangleV
 extrn SetTargetFPS
-extrn DrawRectangleLines
 extrn DrawCircleV
-extrn DrawText
 extrn DrawLine
 extrn GetScreenWidth
 extrn GetScreenHeight
-.__print:
- 	movss xmm0, [ball]
- 	cvtss2sd xmm0, xmm0
-	movss xmm1, [bounding_box]
- 	cvtss2sd xmm1, xmm1
- 	mov rdi, fmt
- 	mov rax, 2
- 	call printf
+
+section '.text' executable
+public _start
 
 _start:
 
@@ -36,23 +27,23 @@ _start:
 	mov rdx, window_title
 	call InitWindow
 
-	mov rdi, 165
+	mov rdi, [target_fps]
 	call SetTargetFPS
 
-	.__draw_loop:
+.__draw_loop:
 	call WindowShouldClose
 	test rax, rax
 	jnz .__exit_drawing
 
-	;; exit condition : KEY_ESCAPE
-	mov rdi, 256
+.__exit_check:
+	mov rdi, [escape_key]				; raylib's KEY_ESCAPE
 	call IsKeyPressed
 	test rax, rax
 	jz .__past_exit_check
 	jmp .__exit_drawing			
-
 .__past_exit_check:
-; update ball position x
+
+.__update_ball_x:
     movss xmm0, [ball]
 	addss xmm0, [ball_velocity]
 	ucomiss xmm0, [bounding_box]
@@ -102,7 +93,7 @@ _start:
 
 .__past_x_handler:
 
-; update ball position y
+.__update_ball_y:
     movss xmm0, [ball + 4]
 	addss xmm0, [ball_velocity + 4]
 	ucomiss xmm0, [bounding_box + 4]
@@ -260,17 +251,31 @@ _start:
 	call _exit
 
 section '.data' writeable
-window_title: db "pong", 0
-fmt: db "| %d |", 10, 0
 
-window_dims: ; dynamic
+window_dims:
 	dd 800
 	dd 600
-bounding_box: ; dynamic
+
+window_title: db "pong", 0
+
+target_fps:	 dd 165
+escape_key:	 dd 256
+
+ball:
+	dd 400.0
+	dd 300.0
+	dd 10.0
+
+ball_velocity:
+	dd 2.0
+	dd 2.0
+
+bounding_box:
 	dd 5.0
 	dd 5.0
 	dd 795.0
 	dd 595.0
+
 left_paddle:
 	dd 10.0
 	dd 10.0
@@ -287,14 +292,6 @@ paddle_top:
 	dd 10.0
 paddle_bottom:
 	dd 490.0
-ball:
-	dd 400.0
-	dd 300.0
-	dd 10.0
-ball_velocity:
-	dd 2.0
-	dd 2.0
-	dd 0.0
 minus_one:
 	dd -1.0
 score_r:
@@ -310,3 +307,8 @@ middle_bottom:
 screen_size:
 	dd 0.0
 	dd 0.0
+
+fmt: db "| %d |", 10, 0
+
+five:
+	dd 5.0
