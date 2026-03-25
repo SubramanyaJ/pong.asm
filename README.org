@@ -2,7 +2,7 @@
 
 The classic pong game written with fasm.
 
-[[file:assets/pong.png][Sample]]
+[[https://raw.githubusercontent.com/SubramanyaJ/pong.asm/refs/heads/master/assets/pong.png][Sample]]
 
 THIS IS STILL IN DEVELOPMENT!
 
